@@ -41,19 +41,19 @@ deploy-localstack:
 		@echo "Waiting to initialize (60 seconds)..."
 		@sleep 60
 
-install-awscli:
-		@sudo apt-get install python3 python3-pip -y
-		@pip3 install awscli
-		@pip3 install awscli-local
-		@bash
-
 install-golang:
 		@echo "Installing Go"
 		@sudo apt install golang-go -y
 
+install-awscli:
+		@sudo apt-get install python3 python3-pip -y
+		@pip3 install awscli
+		@pip3 install awscli-local
+		@export PATH=${PATH}:~/.local/bin/awslocal
+
 lambda-create:
 		@echo "Creating a lambda function example"
-		@sudo apt-get install unzip -y
+		@sudo apt-get install zip -y
 		@go get github.com/aws/aws-lambda-go/lambda
 		@go build -o task
 		@zip task.zip task
@@ -98,7 +98,7 @@ s3-remove-bucket:
 		@echo "Deleting a bucket"
 		@awslocal s3 rb s3://mybucket
 
-install-all: install-docker deploy-localstack install-awscli install-golang
+install-all: install-docker deploy-localstack install-golang install-awscli
 deploy-all: lambda-create lambda-list-functions lambda-invoke s3-create-bucket s3-list-buckets s3-copy-file-to-bucket s3-list-bucket-content
 destroy: s3-remove-bucket lambda-delete
 
