@@ -10,7 +10,7 @@ help:
 		@echo "help"
 		@echo "install-docker"
 		@echo "deploy-localstack"
-		@echo "install-awscli"
+		@echo "install-aws-local-cli"
 		@echo "install-golang"
 		@echo "lambda-create"
 		@echo "lambda-update"
@@ -47,7 +47,8 @@ install-golang:
 		@echo "Installing Go"
 		@sudo apt install golang-go -y
 
-install-awscli:
+install-aws-local-cli:
+		@echo "Installing awslocal"
 		@sudo apt-get install python3 python3-pip -y
 		@pip3 install awscli
 		@pip3 install awscli-local
@@ -99,7 +100,7 @@ s3-remove-bucket:
 		@echo "Deleting a bucket"
 		@${aws-local-path}/awslocal s3 rb s3://mybucket
 
-install-all: install-docker deploy-localstack install-golang install-awscli
+install-all: install-docker deploy-localstack install-golang install-aws-local-cli
 deploy-all: lambda-create lambda-list-functions lambda-invoke s3-create-bucket s3-list-buckets s3-copy-file-to-bucket s3-list-bucket-content
 destroy: s3-remove-bucket lambda-delete
 
