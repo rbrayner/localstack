@@ -1,0 +1,128 @@
+---
+- hosts: localhost
+
+  tasks:
+
+    - name: Check if Docker is installed
+      command: systemctl status docker
+      register: docker_check
+      ignore_errors: yes
+      tags:
+        - install
+
+    - name: Install aptitude using apt
+      apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+      when: 
+        - docker_check.stderr.find('service could not be found') != -1 and (ansible_os_family == "Debian" or ansible_distribution == "Ubuntu")
+      tags:
+        - install
+
+    - name: Install required system packages
+      apt: name={{ item }} state=latest update_cache=yes
+      loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools']
+      when: 
+        - docker_check.stderr.find('service could not be found') != -1 and (ansible_os_family == "Debian" or ansible_distribution == "Ubuntu")
+      tags:
+        - install
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      when: 
+        - docker_check.stderr.find('service could not be found') != -1 and (ansible_os_family == "Debian" or ansible_distribution == "Ubuntu")
+      tags:
+        - install
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+      when: 
+        - docker_check.stderr.find('service could not be found') != -1 and (ansible_os_family == "Debian" or ansible_distribution == "Ubuntu")
+      tags:
+        - install
+
+    - name: Update apt and install docker-ce
+      apt: update_cache=yes name=docker-ce state=latest
+      when: 
+        - docker_check.stderr.find('service could not be found') != -1 and (ansible_os_family == "Debian" or ansible_distribution == "Ubuntu")
+      tags:
+        - install
+
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+      when: 
+        - docker_check.stderr.find('service could not be found') != -1 and (ansible_os_family == "Debian" or ansible_distribution == "Ubuntu")
+      tags:
+        - install
+
+
+
+
+    - name: Upgrade all packages
+      yum: name=* state=latest
+      when: 
+        - docker_check.stderr.find('service could not be found') != -1 and (ansible_os_family == "RedHat" or ansible_distribution == "CentOS")
+      tags:
+        - install
+
+    - name: Download the Docker installer
+      get_url:
+        url: https://get.docker.com/
+        dest: /root/install_docker.sh
+        mode: 0700
+      when: 
+        - docker_check.stderr.find('service could not be found') != -1 and (ansible_os_family == "RedHat" or ansible_distribution == "CentOS")
+      tags:
+        - install
+
+    - name: Install Docker
+      shell: /root/install_docker.sh
+      when: 
+        - docker_check.stderr.find('service could not be found') != -1 and (ansible_os_family == "RedHat" or ansible_distribution == "CentOS")
+      tags:
+        - install
+
+    - name: Remove the Docker installer file.
+      file:
+        state: absent
+        path: /root/install_docker.sh
+      when:
+        - ansible_os_family == "RedHat"
+        - ansible_distribution == "CentOS"
+      tags:
+        - install
+
+    - name: Enable the Docker daemon in systemd
+      systemd:
+        name: docker
+        enabled: yes
+        masked: no
+      when:
+        - docker_check.stderr.find('service could not be found') != -1 and (ansible_os_family == "RedHat" or ansible_distribution == "CentOS")
+      tags:
+        - install
+
+    - name: Start the Docker daemon
+      systemd:
+        name: docker
+        state: started
+        masked: no
+      when:
+        - docker_check.stderr.find('service could not be found') != -1 and (ansible_os_family == "RedHat" or ansible_distribution == "CentOS")
+      tags:
+        - install
+
+
+
+
+    - name: Install docker-compose
+      remote_user: ubuntu
+      get_url:
+        url : https://github.com/docker/compose/releases/download/1.25.1-rc1/docker-compose-Linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: 'u+x,g+x'
+      tags:
+        - install
