@@ -1,7 +1,19 @@
 ---
 - hosts: localhost
+  vars_files:
+    - ../vars/default.yml
+  become_user: root
+  become_method: sudo
+  become: true
+  user: brayner
 
   tasks:
+
+    - name: "Display some vars"
+      debug:
+        msg: "{{ ansible_os_family }} and {{ ansible_distribution }}"
+      tags:
+        - install
 
     - name: Check if Docker is installed
       command: systemctl status docker
@@ -44,7 +56,10 @@
         - install
 
     - name: Update apt and install docker-ce
-      apt: update_cache=yes name=docker-ce state=latest
+      apt: 
+        update_cache: yes
+        name: docker-ce
+        state: latest
       when: 
         - docker_check.stderr.find('service could not be found') != -1 and (ansible_os_family == "Debian" or ansible_distribution == "Ubuntu")
       tags:
@@ -119,10 +134,9 @@
 
 
     - name: Install docker-compose
-      remote_user: ubuntu
       get_url:
-        url : https://github.com/docker/compose/releases/download/1.25.1-rc1/docker-compose-Linux-x86_64
+        url : "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-Linux-x86_64"
         dest: /usr/local/bin/docker-compose
-        mode: 'u+x,g+x'
+        mode: 'u+x,g+x,o+x'
       tags:
         - install

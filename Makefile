@@ -72,7 +72,7 @@ lambda-list-functions:
 
 lambda-invoke:
 		@echo "Invoking function"
-		@sudo docker pull lambci/lambda:go1.x
+		# @sudo docker pull lambci/lambda:go1.x
 		@${aws-local-path}/awslocal lambda invoke --function-name task --payload='{"Name": "world"}' --region=us-east-1 myout.log
 		@cat myout.log
 
